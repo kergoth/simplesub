@@ -46,16 +46,23 @@ main () {
 run_help () {
     command_path="$(command -v "$scriptname-help")" || :
     if [ -n "$command_path" ]; then
-        exec "$command_path"
+        exec "$command_path" "$@"
     else
-        # if [ $# -gt 0 ]; then
-        #     exec "$script" "$1" "-h"
-        # else
+        if [ $# -ne 0 ]; then
+            if has_feature "$1" short_help; then
+                exec "$script" "$1" "-h"
+            elif has_feature "$1" help; then
+                exec "$script" "$1" "--help"
+            else
+                echo >&2 "No help available for $1"
+                return 1
+            fi
+        else
             echo >&2 "Usage: $scriptname COMMAND [ARGS..]"
             echo >&2
             echo >&2 "Available commands:"
             run_commands | sed 's,^,  ,' >&2
-        # fi
+        fi
     fi
 }
 
@@ -77,6 +84,14 @@ run_commands () {
             done | grep -vx '\-setup' | grep -vx 'sh--setup'
         } | sort -u
     fi
+}
+
+has_feature () {
+    command_path="$(command -v "$scriptname-sh-$1" 2>/dev/null)" || :
+    if [ -z "$command_path" ]; then
+        command_path="$(command -v "$scriptname-$1" 2>/dev/null)" || return 1
+    fi
+    sed -n -e "s/^# $scriptname: //p" "$command_path" | grep -Fwq "$2"
 }
 
 die () {
