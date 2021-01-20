@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 # Simple, self-contained take on 'sub'
 # Version 1
 
-set -eu
+set -euo pipefail
 
 main () {
     script="$(resolved_script_path "$0")"
