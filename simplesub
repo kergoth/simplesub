@@ -8,7 +8,7 @@ main () {
     script="$(resolved_script_path "$0")"
     scriptname="${0##*/}"
     scriptdir="$(cd "$(dirname "$script")" && pwd -P)"
-    PATH="$PATH:$scriptdir/libexec:$scriptdir/../libexec"
+    PATH="$PATH:$scriptdir/libexec:$scriptdir/../libexec:$scriptdir"
 
     command=
     if [ $# -gt 0 ]; then
