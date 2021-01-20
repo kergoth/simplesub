@@ -27,24 +27,24 @@ main () {
             ;;
         *)
             # The -setup script is run to bootstrap before any other commands
-            setup_path="$(which "$scriptname-sh--setup" 2>/dev/null)" || true
+            setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || true
             if [ -n "$setup_path" ]; then
                 eval "$(exec "$scriptname-sh--setup" "$@")"
             else
-                setup_path="$(which "$scriptname--setup" 2>/dev/null)" || true
+                setup_path="$(command -v "$scriptname--setup" 2>/dev/null)" || true
                 if [ -n "$setup_path" ]; then
                     eval "\"$setup_path\""
                 fi
             fi
 
-            command_path="$(which "$scriptname-$command")" || die "command not found: $scriptname-$command"
+            command_path="$(command -v "$scriptname-$command")" || die "command not found: $scriptname-$command"
             exec "$command_path" "$@"
             ;;
     esac
 }
 
 run_help () {
-    command_path="$(which "$scriptname-help")" || true
+    command_path="$(command -v "$scriptname-help")" || true
     if [ -n "$command_path" ]; then
         exec "$command_path"
     else
@@ -60,7 +60,7 @@ run_help () {
 }
 
 run_commands () {
-    command_path="$(which "$scriptname-commands")" || true
+    command_path="$(command -v "$scriptname-commands")" || true
     if [ -n "$command_path" ]; then
         exec "$command_path"
     else
@@ -97,7 +97,7 @@ resolved_script_path () {
     script="$1"
     if [ ! -e "$script" ]; then
         if [ -n "${script##*/}" ]; then
-            script="$(which "$script")"
+            script="$(command -v "$script")"
         fi
         if [ ! -e "$script" ]; then
             echo >&2 "Error: unable to determine script location"
