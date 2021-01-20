@@ -28,6 +28,9 @@ main () {
         completions | "--complete")
             run_completions "$@"
             ;;
+        init)
+            run_init "$@"
+            ;;
         *)
             # The -setup script is run to bootstrap before any other commands
             setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
@@ -112,6 +115,26 @@ run_commands () {
             done | grep -vx '\-setup' | grep -vx 'sh--setup'
         } | sort -u
     fi
+}
+
+run_init () {
+    cat <<END
+_${scriptname} () {
+    if [ \$# -gt 0 ]; then
+        ${scriptname}_command="\$1"
+        shift
+        command_path="\$(command -v ${scriptname}-sh-\$${scriptname}_command 2>/dev/null)" || :
+        if [ -n "\$command_path" ]; then
+            . "\$command_path" "\$@"
+        else
+            command ${scriptname} "\$${scriptname}_command" "\$@"
+        fi
+    else
+        command ${scriptname}
+    fi
+}
+alias ${scriptname}=_${scriptname}
+END
 }
 
 has_feature () {
