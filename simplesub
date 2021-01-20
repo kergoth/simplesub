@@ -130,10 +130,10 @@ _${scriptname} () {
         if [ -n "\$command_path" ]; then
             . "\$command_path" "\$@"
         else
-            command ${scriptname} "\$${scriptname}_command" "\$@"
+            "$(abs_script_path "$0")" "\$${scriptname}_command" "\$@"
         fi
     else
-        command ${scriptname}
+        "$(abs_script_path "$0")"
     fi
 }
 alias ${scriptname}=_${scriptname}
@@ -163,21 +163,26 @@ evalf () {
 }
 
 resolved_script_path () {
+    script="$(abs_script_path "$1")"
+    while [ -L "$script" ]; do
+        script="$(abs_readlink "$script")"
+    done
+    echo "$script"
+}
+
+abs_script_path () {
     script="$1"
     if [ ! -e "$script" ]; then
         if [ -n "${script##*/}" ]; then
-            script="$(command -v "$script")"
+            command -v "$script"
         fi
         if [ ! -e "$script" ]; then
             echo >&2 "Error: unable to determine script location"
             exit 1
         fi
+    else
+        abspath "$script"
     fi
-
-    while [ -L "$script" ]; do
-        script="$(abs_readlink "$script")"
-    done
-    echo "$script"
 }
 
 abs_readlink () {
