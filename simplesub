@@ -1,5 +1,5 @@
 #!/bin/sh
-# Simple, straightforward take on 'sub'
+# Simple, self-contained take on 'sub'
 # Version 1
 
 set -eu
