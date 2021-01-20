@@ -1,0 +1,128 @@
+#!/bin/sh
+# Simple, straightforward take on 'sub'
+# Version 1
+
+set -eu
+
+main () {
+    script="$(resolved_script_path "$0")"
+    scriptname="${0##*/}"
+    scriptdir="$(cd "$(dirname "$script")" && pwd -P)"
+    PATH="$PATH:$scriptdir/libexec:$scriptdir/../libexec"
+
+    command=
+    if [ $# -gt 0 ]; then
+        command="$1"
+        shift
+    fi
+
+    evalf 'export _%s_ROOT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$scriptdir"
+
+    case "$command" in
+        "" | "help" | "-h" | "--help")
+            run_help "$@"
+            ;;
+        commands)
+            run_commands "$@"
+            ;;
+        *)
+            # The -setup script is run to bootstrap before any other commands
+            setup_path="$(which "$scriptname-sh--setup" 2>/dev/null)" || true
+            if [ -n "$setup_path" ]; then
+                eval "$(exec "$scriptname-sh--setup" "$@")"
+            else
+                setup_path="$(which "$scriptname--setup" 2>/dev/null)" || true
+                if [ -n "$setup_path" ]; then
+                    eval "\"$setup_path\""
+                fi
+            fi
+
+            command_path="$(which "$scriptname-$command")" || die "command not found: $scriptname-$command"
+            exec "$command_path" "$@"
+            ;;
+    esac
+}
+
+run_help () {
+    command_path="$(which "$scriptname-help")" || true
+    if [ -n "$command_path" ]; then
+        exec "$command_path"
+    else
+        # if [ $# -gt 0 ]; then
+        #     exec "$script" "$1" "-h"
+        # else
+            echo >&2 "Usage: $scriptname COMMAND [ARGS..]"
+            echo >&2
+            echo >&2 "Available commands:"
+            run_commands | sed 's,^,  ,' >&2
+        # fi
+    fi
+}
+
+run_commands () {
+    command_path="$(which "$scriptname-commands")" || true
+    if [ -n "$command_path" ]; then
+        exec "$command_path"
+    else
+        {
+            echo help
+            echo "$PATH" | tr ":" "\n" | while read -r path; do
+                if [ -n "$path" ] && [ -z "${path##/*}" ]; then
+                    for i in "$path/$scriptname-"*; do
+                        if [ -x "$i" ]; then
+                            basename -- "${i#$path/$scriptname-}"
+                        fi
+                    done
+                fi
+            done | grep -vx '\-setup' | grep -vx 'sh--setup'
+        } | sort -u
+    fi
+}
+
+die () {
+    echo >&2 "$@"
+    exit 1
+}
+
+evalf () {
+    fmt="$1"
+    shift
+    # printf >&2 "evalf: $fmt\n" "$@"
+    # eval echo >&2 "evalf: $(printf "$fmt" "$@")"
+    # shellcheck disable=SC2059
+    eval "$(printf "$fmt" "$@")"
+}
+
+resolved_script_path () {
+    script="$1"
+    if [ ! -e "$script" ]; then
+        if [ -n "${script##*/}" ]; then
+            script="$(which "$script")"
+        fi
+        if [ ! -e "$script" ]; then
+            echo >&2 "Error: unable to determine script location"
+            exit 1
+        fi
+    fi
+
+    while [ -L "$script" ]; do
+        script="$(abs_readlink "$script")"
+    done
+    echo "$script"
+}
+
+abs_readlink () {
+    for arg; do
+        abspath "$(readlink "$arg")" "$(dirname "$arg")"
+    done
+}
+
+abspath () {
+    _path="$1"
+    if [ -n "${_path##/*}" ]; then
+        _path="${2:-$PWD}/$1"
+    fi
+    echo "$_path"
+}
+
+main "$@"
