@@ -25,6 +25,9 @@ main () {
         commands)
             run_commands "$@"
             ;;
+        completions | "--complete")
+            run_completions "$@"
+            ;;
         *)
             # The -setup script is run to bootstrap before any other commands
             setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
@@ -68,6 +71,31 @@ run_help () {
             echo >&2
             echo >&2 "Available commands:"
             run_commands | sed 's,^,  ,' >&2
+        fi
+    fi
+}
+
+run_completions () {
+    command_path="$(command -v "$scriptname-completions")" || :
+    if [ -n "$command_path" ]; then
+        exec "$command_path" "$@"
+    else
+        if [ $# -eq 0 ]; then
+            echo commands
+            echo completions
+            printf '%s\n' '--complete'
+            printf '%s\n' '-h'
+            printf '%s\n' '--help'
+            run_commands
+        else
+            subcommand="$1"
+            shift
+            if has_feature "$subcommand" completions; then
+                exec "$script" "$subcommand" --complete "$@"
+            else
+                return 1
+            fi
+
         fi
     fi
 }
