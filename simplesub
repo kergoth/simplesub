@@ -40,14 +40,8 @@ main () {
                 fi
             fi
 
-            sh_command_path="$(command -v "$scriptname-sh-$command")" || :
-            if [ -n "$sh_command_path" ]; then
-                # shellcheck disable=SC1090
-                . "$sh_command_path" "$@"
-            else
-                command_path="$(command -v "$scriptname-$command")" || die "command not found: $scriptname-$command"
-                exec "$command_path" "$@"
-            fi
+            command_path="$(command -v "$scriptname-$command")" || die "command not found: $scriptname-$command"
+            exec "$command_path" "$@"
             ;;
     esac
 }
