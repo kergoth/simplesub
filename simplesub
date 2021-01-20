@@ -118,13 +118,14 @@ run_commands () {
 }
 
 run_init () {
+    scriptname_upper="$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')"
     cat <<END
 _${scriptname} () {
     if [ \$# -gt 0 ]; then
         ${scriptname}_command="\$1"
         shift
-        ${scriptname}_ROOT="\$(cd "\$(dirname "\$(command -v ${scriptname} 2>/dev/null)")" && pwd -P)"
-        PATH="\$PATH:\${${scriptname}_ROOT}/libexec:\${${scriptname}_ROOT}/../libexec"
+        _${scriptname_upper}_ROOT="\$(cd "\$(dirname "\$(command -v ${scriptname} 2>/dev/null)")" && pwd -P)"
+        PATH="\$PATH:\${_${scriptname_upper}_ROOT}/libexec:\${_${scriptname_upper}_ROOT}/../libexec"
         command_path="\$(command -v ${scriptname}-sh-\${${scriptname}_command} 2>/dev/null)" || :
         if [ -n "\$command_path" ]; then
             . "\$command_path" "\$@"
