@@ -119,25 +119,28 @@ run_commands () {
 
 run_init () {
     scriptname_upper="$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')"
-    cat <<END
-_${scriptname} () {
-    if [ \$# -gt 0 ]; then
-        ${scriptname}_command="\$1"
+    declare -f _placeholder \
+        | sed -e "s/placeholder/$scriptname/g; s/PLACEHOLDER/$scriptname_upper/g; s#SCRIPT#$0#g;"
+    printf 'alias %s=_%s\n' "$scriptname" "$scriptname"
+}
+
+_placeholder () {
+    if [ $# -gt 0 ]; then
+        placeholder_command="$1"
         shift
-        _${scriptname_upper}_ROOT="\$(cd "\$(dirname "\$(command -v ${scriptname} 2>/dev/null)")" && pwd -P)"
-        PATH="\$PATH:\${_${scriptname_upper}_ROOT}/libexec:\${_${scriptname_upper}_ROOT}/../libexec"
-        command_path="\$(command -v ${scriptname}-sh-\${${scriptname}_command} 2>/dev/null)" || :
-        if [ -n "\$command_path" ]; then
-            . "\$command_path" "\$@"
+        _PLACEHOLDER_ROOT="$(cd "$(dirname "$(command -v placeholder 2>/dev/null)")" && pwd -P)"
+        PATH="$PATH:${_PLACEHOLDER_ROOT}/libexec:${_PLACEHOLDER_ROOT}/../libexec"
+        command_path="$(command -v "placeholder-sh-${placeholder_command}" 2>/dev/null)" || :
+        if [ -n "$command_path" ]; then
+            # shellcheck disable=SC1090
+            . "$command_path" "$@"
         else
-            "$(abs_script_path "$0")" "\$${scriptname}_command" "\$@"
+            "$(abs_script_path "SCRIPT")" "$placeholder_command" "$@"
         fi
     else
-        "$(abs_script_path "$0")"
+        # shellcheck disable=SC2091
+        "$(abs_script_path "SCRIPT")"
     fi
-}
-alias ${scriptname}=_${scriptname}
-END
 }
 
 has_feature () {
