@@ -112,8 +112,12 @@ run_commands () {
                         fi
                     done
                 fi
-            done | grep -vx '\-setup' | grep -vx 'sh--setup'
-        } | sort -u
+            done \
+                | sed -e 's/^sh-//' \
+                | grep -vx '\-setup' \
+                | grep -vx 'sh--setup'
+        } \
+            | sort -u
     fi
 }
 
