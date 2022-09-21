@@ -125,8 +125,9 @@ run_commands () {
 
 run_init () {
     scriptname_upper="$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')"
+    abs_script="$(abs_script_path "$0")"
     declare -f _placeholder \
-        | sed -e "s/placeholder/$scriptname/g; s/PLACEHOLDER/$scriptname_upper/g; s#SCRIPT#$0#g;"
+        | sed -e "s/placeholder/$scriptname/g; s/PLACEHOLDER/$scriptname_upper/g; s#SCRIPT#$abs_script#g;"
     printf 'alias %s=_%s\n' "$scriptname" "$scriptname"
 }
 
@@ -141,11 +142,11 @@ _placeholder () {
             # shellcheck disable=SC1090
             . "$command_path" "$@"
         else
-            "$(abs_script_path "SCRIPT")" "$placeholder_command" "$@"
+            "SCRIPT" "$placeholder_command" "$@"
         fi
     else
         # shellcheck disable=SC2091
-        "$(abs_script_path "SCRIPT")"
+        "SCRIPT"
     fi
 }
 
