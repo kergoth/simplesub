@@ -1,0 +1,18 @@
+#!/bin/bash
+# simplesub: short_help help
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo >&2 "simplesub test-sh"
+    echo >&2
+    echo >&2 "Test the 'sh-' command functionality using the 'sh-test' and 'echo-test' commands."
+    exit 0
+fi
+
+eval "$(simplesub init)"
+
+unset SIMPLESUB_TEST
+_simplesub test
+if [ "$(simplesub echo-test)" != "SIMPLESUB_TEST: 1" ]; then
+    echo >&2 "FAILED"
+    exit 1
+fi

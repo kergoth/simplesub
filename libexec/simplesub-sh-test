@@ -1,0 +1,3 @@
+#!/bin/sh
+
+export SIMPLESUB_TEST=1

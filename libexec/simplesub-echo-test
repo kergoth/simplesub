@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo "SIMPLESUB_TEST: $SIMPLESUB_TEST"
