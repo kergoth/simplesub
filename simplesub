@@ -155,7 +155,7 @@ has_feature () {
     if [ -z "$command_path" ]; then
         command_path="$(command -v "$scriptname-$1" 2>/dev/null)" || return 1
     fi
-    sed -n -e "s/^# $scriptname: //p" "$command_path" | grep -Fwq "$2"
+    sed -n -e "s/^# $scriptname: //p" "$command_path" | tr ' ' '\n' | grep -Fxq "$2"
 }
 
 die () {
