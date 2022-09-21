@@ -135,6 +135,12 @@ _placeholder () {
     if [ $# -gt 0 ]; then
         placeholder_command="$1"
         shift
+        case "$placeholder_command" in
+			sh-*)
+				echo >&2 "Error: 'placeholder $placeholder_command' should be run as 'placeholder ${placeholder_command#sh-}'"
+				return 1
+				;;
+		esac
         _PLACEHOLDER_ROOT="$(cd "$(dirname "$(command -v placeholder 2>/dev/null)")" && pwd -P)"
         PATH="$PATH:${_PLACEHOLDER_ROOT}/libexec:${_PLACEHOLDER_ROOT}/../libexec"
         command_path="$(command -v "placeholder-sh-${placeholder_command}" 2>/dev/null)" || :
