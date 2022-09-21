@@ -54,7 +54,7 @@ run_help () {
     if [ -n "$command_path" ]; then
         exec "$command_path" "$@"
     else
-        if [ $# -ne 0 ]; then
+        if [ $# -ne 0 ] && [ "$1" != help ]; then
             if has_feature "$1" short_help; then
                 exec "$script" "$1" "-h"
             elif has_feature "$1" help; then
@@ -65,6 +65,8 @@ run_help () {
             fi
         else
             echo >&2 "Usage: $scriptname COMMAND [ARGS..]"
+            echo >&2
+            echo >&2 "For command help: $scriptname help COMMAND"
             echo >&2
             echo >&2 "Available commands:"
             run_commands | sed 's,^,  ,' >&2
