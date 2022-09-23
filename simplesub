@@ -32,6 +32,10 @@ main () {
         init)
             run_init "$@"
             ;;
+        has_feature)
+            # internal utility command
+            has_feature "$@"
+            ;;
         *)
             # The -setup script is run to bootstrap before any other commands
             setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
