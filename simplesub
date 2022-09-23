@@ -5,9 +5,13 @@
 set -euo pipefail
 
 main () {
-    script="$(resolved_script_path "$0")"
     scriptname="${0##*/}"
+    script="$(abs_script_path "$0")"
     scriptdir="$(cd "$(dirname "$script")" && pwd -P)"
+    if ! [ -d "$scriptdir/libexec" ] && ! [ -d "$scriptdir/../libexec" ]; then
+        script="$(resolved_script_path "$0")"
+        scriptdir="$(cd "$(dirname "$script")" && pwd -P)"
+    fi
     PATH="$PATH:$scriptdir/libexec:$scriptdir/../libexec:$scriptdir"
 
     command=
