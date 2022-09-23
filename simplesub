@@ -27,11 +27,20 @@ main () {
         "" | "help" | "-h" | "--help")
             run_help "$@"
             ;;
+        help_internal)
+            run_help_internal "$@"
+            ;;
         commands)
             run_commands "$@"
             ;;
+        commands_internal)
+            run_commands_internal "$@"
+            ;;
         completions | "--complete")
             run_completions "$@"
+            ;;
+        completions_internal)
+            run_completions_internal "$@"
             ;;
         init)
             run_init "$@"
@@ -63,23 +72,27 @@ run_help () {
     if [ -n "$command_path" ]; then
         exec "$command_path" "$@"
     else
-        if [ $# -ne 0 ] && [ "$1" != help ]; then
-            if has_feature "$1" short_help; then
-                exec "$script" "$1" "-h"
-            elif has_feature "$1" help; then
-                exec "$script" "$1" "--help"
-            else
-                echo >&2 "No help available for $1"
-                return 1
-            fi
+        run_help_internal "$@"
+    fi
+}
+
+run_help_internal () {
+    if [ $# -ne 0 ] && [ "$1" != help ]; then
+        if has_feature "$1" short_help; then
+            exec "$script" "$1" "-h"
+        elif has_feature "$1" help; then
+            exec "$script" "$1" "--help"
         else
-            echo >&2 "Usage: $scriptname COMMAND [ARGS..]"
-            echo >&2
-            echo >&2 "For command help: $scriptname help COMMAND"
-            echo >&2
-            echo >&2 "Available commands:"
-            run_commands | sed 's,^,  ,' >&2
+            echo >&2 "No help available for $1"
+            return 1
         fi
+    else
+        echo >&2 "Usage: $scriptname COMMAND [ARGS..]"
+        echo >&2
+        echo >&2 "For command help: $scriptname help COMMAND"
+        echo >&2
+        echo >&2 "Available commands:"
+        run_commands | sed 's,^,  ,' >&2
     fi
 }
 
@@ -88,23 +101,27 @@ run_completions () {
     if [ -n "$command_path" ]; then
         exec "$command_path" "$@"
     else
-        if [ $# -eq 0 ]; then
-            echo commands
-            echo completions
-            printf '%s\n' '--complete'
-            printf '%s\n' '-h'
-            printf '%s\n' '--help'
-            run_commands
-        else
-            subcommand="$1"
-            shift
-            if has_feature "$subcommand" completions; then
-                exec "$script" "$subcommand" --complete "$@"
-            else
-                return 1
-            fi
+        run_completions_internal "$@"
+    fi
+}
 
+run_completions_internal () {
+    if [ $# -eq 0 ]; then
+        echo commands
+        echo completions
+        printf '%s\n' '--complete'
+        printf '%s\n' '-h'
+        printf '%s\n' '--help'
+        run_commands
+    else
+        subcommand="$1"
+        shift
+        if has_feature "$subcommand" completions; then
+            exec "$script" "$subcommand" --complete "$@"
+        else
+            return 1
         fi
+
     fi
 }
 
@@ -113,23 +130,27 @@ run_commands () {
     if [ -n "$command_path" ]; then
         exec "$command_path"
     else
-        {
-            echo help
-            echo "$PATH" | tr ":" "\n" | while read -r path; do
-                if [ -n "$path" ] && [ -z "${path##/*}" ]; then
-                    for i in "$path/$scriptname-"*; do
-                        if [ -x "$i" ]; then
-                            basename -- "${i#$path/$scriptname-}"
-                        fi
-                    done
-                fi
-            done \
-                | sed -e 's/^sh-//' \
-                | grep -vx '\-setup' \
-                | grep -vx 'sh--setup'
-        } \
-            | sort -u
+        run_commands_internal "$@"
     fi
+}
+
+run_commands_internal () {
+    {
+        echo help
+        echo "$PATH" | tr ":" "\n" | while read -r path; do
+            if [ -n "$path" ] && [ -z "${path##/*}" ]; then
+                for i in "$path/$scriptname-"*; do
+                    if [ -x "$i" ]; then
+                        basename -- "${i#$path/$scriptname-}"
+                    fi
+                done
+            fi
+        done \
+            | sed -e 's/^sh-//' \
+            | grep -vx '\-setup' \
+            | grep -vx 'sh--setup'
+    } \
+        | sort -u
 }
 
 run_init () {
