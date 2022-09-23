@@ -16,6 +16,7 @@ main () {
         shift
     fi
 
+    evalf 'export _%s_SCRIPT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$script"
     evalf 'export _%s_ROOT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$scriptdir"
 
     case "$command" in
