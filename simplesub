@@ -14,12 +14,6 @@ main () {
     fi
     PATH="$PATH:$scriptdir/libexec:$scriptdir/../libexec:$scriptdir"
 
-    command=
-    if [ $# -gt 0 ]; then
-        command="$1"
-        shift
-    fi
-
     evalf 'export _%s_SCRIPT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$script"
     evalf 'export _%s_ROOT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$scriptdir"
 
@@ -34,12 +28,16 @@ main () {
         fi
     fi
 
-    case "$command" in
+    case "${1:-}" in
         "" | "-h" | "--help")
             command=help
             ;;
         --complete)
             command=completions
+            ;;
+        *)
+            command="$1"
+            shift
             ;;
     esac
 
