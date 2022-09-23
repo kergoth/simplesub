@@ -23,15 +23,6 @@ main () {
     evalf 'export _%s_SCRIPT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$script"
     evalf 'export _%s_ROOT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$scriptdir"
 
-    case "$command" in
-        "" | "-h" | "--help")
-            command=help
-            ;;
-        --complete)
-            command=completions
-            ;;
-    esac
-
     # The -setup script is run to bootstrap before any other commands
     setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
     if [ -n "$setup_path" ]; then
@@ -42,6 +33,15 @@ main () {
             eval "\"$setup_path\""
         fi
     fi
+
+    case "$command" in
+        "" | "-h" | "--help")
+            command=help
+            ;;
+        --complete)
+            command=completions
+            ;;
+    esac
 
     command_path="$(command -v "$scriptname-$command" 2>/dev/null)" || :
     if [ -n "$command_path" ]; then
@@ -77,6 +77,18 @@ run_help_internal () {
         echo >&2 "Available commands:"
         run_commands | sed 's,^,  ,' >&2
     fi
+}
+
+has_feature () {
+    command_path="$(command -v "$scriptname-sh-$1" 2>/dev/null)" || :
+    if [ -z "$command_path" ]; then
+        command_path="$(command -v "$scriptname-$1" 2>/dev/null)" || return 1
+    fi
+    sed -n -e "s/^# $scriptname: //p" "$command_path" | tr ' ' '\n' | grep -Fxq "$2"
+}
+
+run_has_feature () {
+    has_feature "$@"
 }
 
 run_completions () {
@@ -134,10 +146,6 @@ run_init () {
     printf 'alias %s=_%s\n' "$scriptname" "$scriptname"
 }
 
-run_has_feature () {
-    has_feature "$@"
-}
-
 _placeholder () {
     if [ $# -gt 0 ]; then
         placeholder_command="$1"
@@ -161,14 +169,6 @@ _placeholder () {
         # shellcheck disable=SC2091
         "SCRIPT"
     fi
-}
-
-has_feature () {
-    command_path="$(command -v "$scriptname-sh-$1" 2>/dev/null)" || :
-    if [ -z "$command_path" ]; then
-        command_path="$(command -v "$scriptname-$1" 2>/dev/null)" || return 1
-    fi
-    sed -n -e "s/^# $scriptname: //p" "$command_path" | tr ' ' '\n' | grep -Fxq "$2"
 }
 
 die () {
