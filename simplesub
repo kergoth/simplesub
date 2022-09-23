@@ -24,56 +24,39 @@ main () {
     evalf 'export _%s_ROOT="%s"' "$(echo "$scriptname" | tr '[:lower:]' '[:upper:]')" "$scriptdir"
 
     case "$command" in
-        "" | "help" | "-h" | "--help")
-            run_help "$@"
+        "" | "-h" | "--help")
+            command=help
             ;;
-        help_internal)
-            run_help_internal "$@"
-            ;;
-        commands)
-            run_commands "$@"
-            ;;
-        commands_internal)
-            run_commands_internal "$@"
-            ;;
-        completions | "--complete")
-            run_completions "$@"
-            ;;
-        completions_internal)
-            run_completions_internal "$@"
-            ;;
-        init)
-            run_init "$@"
-            ;;
-        has_feature)
-            # internal utility command
-            has_feature "$@"
-            ;;
-        *)
-            # The -setup script is run to bootstrap before any other commands
-            setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
-            if [ -n "$setup_path" ]; then
-                eval "$(exec "$scriptname-sh--setup" "$@")"
-            else
-                setup_path="$(command -v "$scriptname--setup" 2>/dev/null)" || :
-                if [ -n "$setup_path" ]; then
-                    eval "\"$setup_path\""
-                fi
-            fi
-
-            command_path="$(command -v "$scriptname-$command")" || die "command not found: $scriptname-$command"
-            exec "$command_path" "$@"
+        --complete)
+            command=completions
             ;;
     esac
-}
 
-run_help () {
-    command_path="$(command -v "$scriptname-help")" || :
+    # The -setup script is run to bootstrap before any other commands
+    setup_path="$(command -v "$scriptname-sh--setup" 2>/dev/null)" || :
+    if [ -n "$setup_path" ]; then
+        eval "$(exec "$scriptname-sh--setup" "$@")"
+    else
+        setup_path="$(command -v "$scriptname--setup" 2>/dev/null)" || :
+        if [ -n "$setup_path" ]; then
+            eval "\"$setup_path\""
+        fi
+    fi
+
+    command_path="$(command -v "$scriptname-$command" 2>/dev/null)" || :
     if [ -n "$command_path" ]; then
         exec "$command_path" "$@"
     else
-        run_help_internal "$@"
+        if declare -f run_"$command" >/dev/null 2>&1; then
+            eval "run_$command "'"$@"'
+        else
+            die "command not found: $scriptname-$command"
+        fi
     fi
+}
+
+run_help () {
+    run_help_internal "$@"
 }
 
 run_help_internal () {
@@ -97,12 +80,7 @@ run_help_internal () {
 }
 
 run_completions () {
-    command_path="$(command -v "$scriptname-completions")" || :
-    if [ -n "$command_path" ]; then
-        exec "$command_path" "$@"
-    else
-        run_completions_internal "$@"
-    fi
+    run_completions_internal "$@"
 }
 
 run_completions_internal () {
@@ -112,7 +90,7 @@ run_completions_internal () {
         printf '%s\n' '--complete'
         printf '%s\n' '-h'
         printf '%s\n' '--help'
-        run_commands
+        run_commands "$@"
     else
         subcommand="$1"
         shift
@@ -126,12 +104,7 @@ run_completions_internal () {
 }
 
 run_commands () {
-    command_path="$(command -v "$scriptname-commands")" || :
-    if [ -n "$command_path" ]; then
-        exec "$command_path"
-    else
-        run_commands_internal "$@"
-    fi
+    run_commands_internal "$@"
 }
 
 run_commands_internal () {
@@ -159,6 +132,10 @@ run_init () {
     declare -f _placeholder \
         | sed -e "s/placeholder/$scriptname/g; s/PLACEHOLDER/$scriptname_upper/g; s#SCRIPT#$abs_script#g;"
     printf 'alias %s=_%s\n' "$scriptname" "$scriptname"
+}
+
+run_has_feature () {
+    has_feature "$@"
 }
 
 _placeholder () {
